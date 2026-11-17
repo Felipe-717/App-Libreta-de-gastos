@@ -14,9 +14,9 @@ App de escritorio para Windows para gestionar movimientos, presupuestos, tarjeta
 
 **Consultar la libreta.** En una prueba con datos ficticios, el asistente leyó el saldo del mes (1.510.000 COP), los gastos de alimentación (150.000 COP) y el capital pendiente de la tarjeta (360.000 COP).
 
-**Proponer un movimiento.** Si escribes «Anota 13.000 pesos de café», el chat presenta una propuesta editable. El gasto se guarda cuando pulsas **Confirmar**.
+**Proponer un movimiento.** Si escribes «Anota 13.000 pesos de café», el chat presenta una propuesta editable. El gasto se guarda cuando pulsas **Anotar 1 movimiento**.
 
-![Ayuda contextual en la pestaña Tarjeta](docs/capturas/ayuda.png)
+![Chat del asistente mostrando una consulta de saldo, gastos y deuda con datos ficticios](docs/capturas/asistente.png)
 
 ## Ejecutar
 
