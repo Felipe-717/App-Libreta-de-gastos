@@ -1,0 +1,17 @@
+/.venv*/
+/.codegraph/
+__pycache__/
+*.py[cod]
+/build/
+/dist/
+/capturas/
+/datos/
+.env
+.env.*
+!.env.ejemplo
+*.sqlite*
+*.db
+*.db-wal
+*.db-shm
+*.exe
+*.lnk

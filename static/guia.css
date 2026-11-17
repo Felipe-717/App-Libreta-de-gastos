@@ -1,0 +1,42 @@
+.guia-dialogo,.guia-intro{width:min(480px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow:auto;border:1px solid var(--linea);border-radius:var(--radio);background:var(--hoja);color:var(--tinta);padding:24px;box-shadow:var(--sombra-alta)}
+.guia-dialogo::backdrop,.guia-intro::backdrop{background:rgba(0,0,0,.55)}
+.guia-dialogo h2,.guia-intro h2,.guia-tarjeta h2{margin:4px 0 10px}
+.guia-progreso{color:var(--tenue);font-size:12px;margin:0}
+.guia-texto{color:var(--tinta-2);line-height:1.55;min-height:4em}
+.guia-acciones{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.guia-salir{margin-right:auto}
+.guia-asistente{position:fixed;right:20px;bottom:20px;z-index:20;display:flex;align-items:center;gap:8px;overflow:hidden;border:1px solid var(--linea);border-radius:999px;background:var(--hoja);color:var(--tinta);box-shadow:var(--sombra-alta);padding:5px 14px 5px 5px;font-weight:600}
+.guia-avatar{position:relative;display:block;flex:none;width:40px;height:40px;overflow:hidden;border-radius:50%}
+.guia-avatar img{display:block;width:100%;height:100%}
+.guia-luces{position:absolute;inset:-25%;background:radial-gradient(circle at 32% 40%,rgba(126,210,177,.48),transparent 26%),radial-gradient(circle at 68% 60%,rgba(192,165,235,.45),transparent 28%);mix-blend-mode:screen;animation:guia-luz 5s ease-in-out infinite alternate;pointer-events:none}
+@keyframes guia-luz{from{transform:translateX(-15%) rotate(0deg)}to{transform:translateX(15%) rotate(30deg)}}
+.guia-aviso{color:var(--tinta-2);font-size:.9em}
+.guia-recorrido{position:fixed;inset:0;width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;overflow:hidden;color:var(--tinta)}
+.guia-recorrido::backdrop{background:transparent}
+.guia-foco{position:fixed;border:2px solid var(--verde);border-radius:8px;box-shadow:0 0 0 200vmax rgba(0,0,0,.72);pointer-events:none;transition:left .2s ease,top .2s ease,width .2s ease,height .2s ease}
+.guia-tarjeta{position:fixed;width:min(400px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;padding:20px;border:1px solid var(--linea);border-radius:var(--radio);background:var(--hoja);box-shadow:var(--sombra-alta)}
+.guia-recorrido[data-movimiento] .guia-tarjeta{transition:left .2s ease,top .2s ease}
+.guia-tarjeta .guia-texto{min-height:0}
+.guia-intro-visual{height:144px;margin-bottom:20px;border-radius:12px;background:#f0f2ed center/cover no-repeat}
+.guia-intro-visual[data-guia-visual="resumen"]{background-image:url("ilustraciones-guia/resumen.svg")}
+.guia-intro-visual[data-guia-visual="movimientos"]{background-image:url("ilustraciones-guia/movimientos.svg")}
+.guia-intro-visual[data-guia-visual="fijos"]{background-image:url("ilustraciones-guia/fijos.svg")}
+.guia-intro-visual[data-guia-visual="tarjeta"]{background-image:url("ilustraciones-guia/tarjeta.svg")}
+.guia-intro-visual[data-guia-visual="prestamos"]{background-image:url("ilustraciones-guia/prestamos.svg")}
+.guia-intro-visual[data-guia-visual="ahorros"]{background-image:url("ilustraciones-guia/ahorros.svg")}
+.guia-intro-visual[data-guia-visual="historia"]{background-image:url("ilustraciones-guia/historia.svg")}
+.guia-intro-visual[data-guia-visual="asistente"]{background-image:url("ilustraciones-guia/asistente.svg")}
+.guia-intro-visual[data-guia-visual="ajustes"]{background-image:url("ilustraciones-guia/ajustes.svg")}
+.guia-recorrido button:focus-visible,.guia-dialogo button:focus-visible,.guia-intro button:focus-visible,.guia-asistente:focus-visible{outline:3px solid var(--verde);outline-offset:3px}
+@media (min-width:1121px){.principal{padding-right:150px}}
+@media (max-width:1120px){
+  .principal{padding-bottom:100px}
+  .guia-asistente{right:12px;bottom:12px;width:52px;height:52px;padding:5px;justify-content:center}
+  .guia-asistente>span:last-child{display:none}
+}
+@media (max-width:480px){
+  .guia-dialogo,.guia-intro{padding:20px}
+  .guia-intro-visual{height:112px;margin-bottom:16px;background-size:cover}
+  .guia-acciones .guia-salir{flex-basis:100%;margin-right:0}
+}
+@media (prefers-reduced-motion:reduce){.guia-luces{animation:none}.guia-foco,.guia-recorrido[data-movimiento] .guia-tarjeta{transition:none}}

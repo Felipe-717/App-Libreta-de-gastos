@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Libreta de gastos</title>
+<link rel="icon" href="icono.png">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="auth.css">
+<link rel="stylesheet" href="guia.css">
+<script>
+  // El tema se aplica antes de pintar; si no hay preferencia, la libreta abre en oscuro.
+  try {
+    const tema = localStorage.getItem("tema-resumen");
+    document.documentElement.dataset.theme = tema || "dark";
+  } catch (e) { document.documentElement.dataset.theme = "dark"; }
+</script>
+</head>
+<body data-vista="resumen">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-resumen" viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 7h6V4h-6z"/></symbol>
+  <symbol id="i-movimientos" viewBox="0 0 24 24"><path d="M7 4v16M7 4 3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></symbol>
+  <symbol id="i-fijos" viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M8 3v5M16 3v5M8 14h3M8 17h6"/></symbol>
+  <symbol id="i-tarjeta" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 10h18M7 15h4"/></symbol>
+  <symbol id="i-prestamos" viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 8h5M18.5 5.5v5"/></symbol>
+  <symbol id="i-ahorros" viewBox="0 0 24 24"><path d="M5 11c0-3.3 3.1-6 7-6s7 2.7 7 6c0 2-1 3.6-2.6 4.7V19h-3v-2h-3v2h-3v-3.3C5.9 14.6 5 12.9 5 11zM19 10h2M9 4.5 8 2.5"/></symbol>
+  <symbol id="i-historia" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4M12 7v5l3 2"/></symbol>
+  <symbol id="i-asistente" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9zM5 15.5l.6 1.4 1.4.6-1.4.6L5 19.5l-.6-1.4L3 17.5l1.4-.6z"/></symbol>
+  <symbol id="i-ajustes" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-sol" viewBox="0 0 24 24"><path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+</svg>
+
+<div id="cargaLibreta" role="status" style="padding: 2rem">Cargando la libreta…</div>
+<main id="authScreen" class="auth-screen" hidden>
+  <div class="auth-atmosfera" aria-hidden="true"><span></span></div>
+  <div class="auth-contenido">
+    <header class="auth-marca">
+      <img src="icono.png" alt="" width="36" height="36">
+      <div><b>Libreta</b><small>de gastos</small></div>
+    </header>
+    <section class="auth-tarjeta" aria-labelledby="authTitulo">
+      <h1 id="authTitulo"></h1>
+      <p id="authDescripcion" class="auth-descripcion"></p>
+      <p id="authImportInfo" class="auth-aviso" hidden>Si ya usabas esta libreta, tus datos locales existentes se importarán automáticamente al crear el primer perfil. El archivo original se conserva.</p>
+      <form id="authForm" autocomplete="on">
+        <label for="authUsuario">Nombre de perfil</label>
+        <input id="authUsuario" name="username" type="text" maxlength="40" autocomplete="username" required>
+        <label for="authContrasena">Contraseña</label>
+        <input id="authContrasena" name="password" type="password" minlength="8" maxlength="1024" autocomplete="current-password" required>
+        <p id="authError" class="auth-error" role="alert" hidden></p>
+        <button id="authEnviar" class="primario" type="submit"></button>
+      </form>
+      <button id="authCambiarModo" class="auth-enlace" type="button" hidden></button>
+      <button id="authVolverApp" class="auth-enlace" type="button" hidden>Volver a mi libreta</button>
+    </section>
+    <p class="auth-pie">Tus perfiles y movimientos se guardan localmente en este equipo.</p>
+  </div>
+</main>
+<div class="app" style="display: none">
+
+  <aside class="lateral">
+    <div class="marca-app">
+      <img src="icono.png" alt="" width="34" height="34">
+      <div><b>Libreta</b><small>de gastos</small></div>
+    </div>
+
+    <nav class="nav" id="nav" aria-label="Secciones">
+      <button data-ir="resumen" aria-label="Resumen" title="Resumen"><svg><use href="#i-resumen"/></svg><span>Resumen</span></button>
+      <button data-ir="movimientos" aria-label="Movimientos" title="Movimientos"><svg><use href="#i-movimientos"/></svg><span>Movimientos</span></button>
+      <button data-ir="fijos" aria-describedby="avisoFijos" aria-label="Fijos y sueldo" title="Fijos y sueldo"><svg><use href="#i-fijos"/></svg><span>Fijos y sueldo</span><i class="aviso" id="avisoFijos" hidden></i></button>
+      <button data-ir="tarjeta" aria-describedby="avisoTarjeta" aria-label="Tarjeta" title="Tarjeta"><svg><use href="#i-tarjeta"/></svg><span>Tarjeta</span><i class="aviso" id="avisoTarjeta" hidden></i></button>
+      <button data-ir="prestamos" aria-describedby="avisoPrestamos" aria-label="Préstamos" title="Préstamos"><svg><use href="#i-prestamos"/></svg><span>Préstamos</span><i class="aviso" id="avisoPrestamos" hidden></i></button>
+      <button data-ir="ahorros" aria-label="Ahorros" title="Ahorros"><svg><use href="#i-ahorros"/></svg><span>Ahorros</span></button>
+      <button data-ir="historia" aria-label="Historia" title="Historia"><svg><use href="#i-historia"/></svg><span>Historia</span></button>
+      <button data-ir="asistente" aria-label="Asistente" title="Asistente"><svg><use href="#i-asistente"/></svg><span>Asistente</span></button>
+      <button data-ir="ajustes" aria-label="Configuración" title="Configuración"><svg><use href="#i-ajustes"/></svg><span>Configuración</span></button>
+    </nav>
+
+    <div class="lateral-pie">
+      <span class="estado" id="estado">Cargando...</span>
+      <details class="perfil-local">
+        <summary><span>Perfil</span><b id="usuarioActivo"></b></summary>
+        <div class="perfil-acciones">
+          <button id="btnCrearPerfil" class="ghost" type="button">Crear otro perfil</button>
+          <button id="btnCerrarSesion" class="ghost" type="button">Cerrar sesión</button>
+        </div>
+      </details>
+      <div class="archivo">
+        <button id="btnRecargar" class="ghost">Recargar</button>
+        <button id="btnExportar" class="ghost">Descargar copia</button>
+        <input type="file" id="inputImport" accept=".json,application/json" hidden>
+        <button id="btnImportar" class="ghost">Cargar copia</button>
+      </div>
+      <button id="btnGuia" type="button" class="ghost">Ver guía</button>
+      <button id="btnTema" class="tema" title="Cambiar entre claro y oscuro">
+        <svg class="sol"><use href="#i-sol"/></svg><svg class="luna"><use href="#i-luna"/></svg>
+        <span>Tema</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="principal">
+
+    <header class="mesbar">
+      <div class="mesnav">
+        <button id="btnMesAnt" class="redondo" title="Mes anterior" aria-label="Mes anterior">&#8249;</button>
+        <div class="mestitulo">
+          <b id="mesNombre">—</b>
+          <small id="mesNota"></small>
+        </div>
+        <button id="btnMesSig" class="redondo" title="Mes siguiente" aria-label="Mes siguiente">&#8250;</button>
+      </div>
+      <input id="selMes" type="month" aria-label="Mes">
+      <button id="btnHoy" class="ghost">Ir al mes actual</button>
+    </header>
+
+    <!-- ============================================================ resumen -->
+    <section class="portada" data-en="resumen" aria-labelledby="tituloResumen">
+      <div class="portada-cabecera">
+        <h1 id="tituloResumen">Resumen</h1>
+        <div class="portada-acciones">
+          <button id="btnAsistenteResumen" type="button"><img src="avatar-asistente.png" width="40" height="40" alt=""> Asistente</button>
+          <button id="btnNuevoMovimiento" class="primario" type="button">+ Nuevo movimiento</button>
+        </div>
+      </div>
+      <div class="portada-cifras">
+        <div class="portada-cifra principal-cifra"><span>Saldo disponible</span><strong id="portadaLibre"></strong><small>Después de lo pendiente</small></div>
+        <div class="portada-cifra"><span>Entradas</span><strong id="portadaEntradas"></strong><small>Recibidas este mes</small></div>
+        <div class="portada-cifra"><span>Salidas</span><strong id="portadaSalidas"></strong><small>Registradas este mes</small></div>
+      </div>
+      <div class="portada-centro">
+        <div class="panel portada-panel">
+          <h2>Saldo día a día <em id="lineaResumen"></em></h2>
+          <div class="grafico" id="grafLinea"></div>
+        </div>
+        <div class="panel portada-panel">
+          <h2>Por pagar <button id="btnAgendaResumen" class="ghost" type="button">Ver agenda</button></h2>
+          <div id="portadaPagos"></div>
+        </div>
+      </div>
+      <div class="panel portada-panel">
+        <h2>Movimientos recientes <button id="btnMovimientosResumen" class="ghost" type="button">Ver todos →</button></h2>
+        <div id="portadaMovimientos"></div>
+      </div>
+    </section>
+
+    <details class="resumen-detalle" data-en="resumen">
+      <summary>Desglose del mes</summary>
+      <section class="hero">
+      <div class="hero-cabeza">
+        <div>
+          <small class="rotulo">Saldo del mes</small>
+          <div class="cifra-grande" id="saldo">$0</div>
+          <div class="cifra-nota" id="notaSaldo">Saldo de hoy, antes de pagar lo que falta del mes.</div>
+        </div>
+        <div class="escenarios" id="escenarios"></div>
+      </div>
+
+      <div class="barra" id="barra">
+        <div class="seg gastado" id="segGastado" style="width:0"></div>
+        <div class="seg ahorrado" id="segAhorrado" style="width:0"></div>
+        <div class="seg comprometido" id="segComprometido" style="width:0"></div>
+        <div class="seg tarjetaPend" id="segTarjeta" style="width:0"></div>
+        <div class="seg porAhorrar" id="segPorAhorrar" style="width:0"></div>
+        <div class="seg libre" id="segLibre"></div>
+        <div class="seg previsto" id="segPrevisto" style="width:0"></div>
+        <div class="marca" id="marcaHoy" hidden><span id="marcaValor"></span></div>
+      </div>
+      <div class="leyenda">
+        <span><i class="g"></i>Ya salió <em id="lgGastado"></em></span>
+        <span id="lgAhorradoCaja" hidden><i class="a"></i>Apartado en ahorro <em id="lgAhorrado"></em></span>
+        <span id="lgFijosCaja"><i class="c"></i>Fijos por pagar <em id="lgFijos"></em></span>
+        <span id="lgTarjetaCaja" hidden><i class="t"></i>Tarjeta por pagar <em id="lgTarjeta"></em></span>
+        <span id="lgPorAhorrarCaja" hidden><i class="pa"></i>Falta para la meta de ahorro <em id="lgPorAhorrar"></em></span>
+        <span><i class="l"></i>Libre de verdad <em id="lgLibre"></em></span>
+        <span id="lgPrevistoCaja" hidden><i class="p"></i>Sueldo por recibir <em id="lgPrevisto"></em></span>
+      </div>
+    </section>
+
+    <section class="kpis">
+      <div class="kpi"><small>Saldo al iniciar</small><b id="miniInicial">$0</b><span class="delta" id="dInicial"></span></div>
+      <div class="kpi destacado"><small>Queda libre</small><b id="libre">$0</b><span class="delta" id="dLibre"></span></div>
+      <div class="kpi"><small>Falta pagar</small><b id="comprometido">$0</b><span class="delta" id="dPendiente"></span></div>
+      <div class="kpi" title="Plata que ya entró a la cuenta este mes: sueldo registrado, otros ingresos, retiros de ahorro, avances y abonos de préstamos"><small>Ya entró</small><b id="ingresos">$0</b><span class="delta" id="dIngresos"></span></div>
+      <div class="kpi" title="Sueldo previsto que todavía no ha llegado. No cuenta en el saldo hasta que lo registre"><small>Falta por entrar</small><b id="porRecibir" class="estimado">$0</b><span class="delta" id="dPorRecibir"></span></div>
+      <div class="kpi" id="kpiPagoTarjetaCaja" hidden title="Lo que hay que pagarle a la tarjeta este mes: cuotas de las compras, intereses, cuota de manejo y comisiones. No es un gasto fijo: la app lo calcula sola"><small>Pago de la tarjeta</small><b id="kpiPagoTarjeta">$0</b><span class="delta" id="dPagoTarjeta"></span></div>
+      <div class="kpi" title="Lo que se compró con la tarjeta este mes. No sale del saldo hoy: se paga en los extractos"><small>Con tarjeta este mes</small><b id="kpiTarjetaMes">$0</b><span class="delta" id="dTarjetaMes"></span></div>
+      <div class="kpi"><small>Consumo del mes</small><b id="kpiConsumo">$0</b><span class="delta" id="dConsumo"></span></div>
+      <div class="kpi" id="miniDeudaCaja" hidden><small>Deuda tarjeta</small><b id="miniDeuda">$0</b><span class="delta" id="dDeuda"></span></div>
+      <div class="kpi" id="miniTeDebenCaja" hidden><small>Le deben</small><b id="miniTeDeben">$0</b><span class="delta" id="dTeDeben"></span></div>
+      <div class="kpi"><small>Ahorro acumulado</small><b id="ahorro">$0</b><span class="delta" id="dAhorro"></span></div>
+      <div class="kpi" title="Saldo + ahorros + lo que le deben − lo que debe en la tarjeta"><small>Patrimonio</small><b id="kpiPatrimonio">$0</b><span class="delta" id="dPatrimonio"></span></div>
+    </section>
+
+    <div class="panel">
+      <h2>Periodos del mes</h2>
+      <div class="periodos" id="periodos"></div>
+    </div>
+    </details>
+
+    <div class="panel revisar" id="panelRevisar" data-en="resumen" hidden>
+      <h2>Para revisar <em id="revisarResumen"></em></h2>
+      <div id="listaRevisar"></div>
+    </div>
+
+    <header class="vista-cabecera" data-en="movimientos"><h1>Movimientos</h1><a class="accion-cabecera" href="#panelNuevoMovimiento">+ Nuevo movimiento</a></header>
+    <header class="vista-cabecera" data-en="fijos"><h1>Fijos y sueldo</h1></header>
+    <header class="vista-cabecera" data-en="tarjeta"><h1>Tarjeta</h1></header>
+    <header class="vista-cabecera" data-en="prestamos"><h1>Préstamos</h1></header>
+    <header class="vista-cabecera" data-en="ahorros"><h1>Ahorros</h1></header>
+    <header class="vista-cabecera" data-en="historia"><h1>Historia</h1></header>
+    <header class="vista-cabecera" data-en="asistente"><h1>Asistente</h1></header>
+    <header class="vista-cabecera" data-en="ajustes"><h1>Configuración</h1></header>
+
+    <div class="panel" id="panelNuevoMovimiento" data-en="resumen movimientos">
+      <h2>Anotar un movimiento <em id="hoyTxt"></em></h2>
+      <div class="form-rapido" id="formRapido">
+        <div class="f-desc"><label for="gDesc">Qué fue</label><input id="gDesc" placeholder="Un dulce en la tienda"></div>
+        <div><label for="gMonto">Monto</label><input id="gMonto" type="number" min="0" step="100" placeholder="3000"></div>
+        <div id="campoCat"><label for="gCat">Categoría</label><select id="gCat"></select></div>
+        <div id="campoCuotas" hidden><label for="gCuotas">Cuotas</label><input id="gCuotas" type="number" min="1" max="48" step="1" value="1"></div>
+        <div id="campoAhorro" hidden><label for="gAhorro">Bolsillo de ahorro</label><select id="gAhorro"></select></div>
+        <div><label for="gTipo">Tipo</label><select id="gTipo">
+          <option value="gasto">Salida · Gasto</option>
+          <option value="tarjeta">Tarjeta · Compra</option>
+          <option value="avance">Tarjeta · Avance a la cuenta</option>
+          <option value="ingreso">Entrada · Ingreso</option>
+          <option value="aporte">Salida · Aporte a ahorro</option>
+          <option value="retiro">Entrada · Retiro de ahorro</option>
+        </select></div>
+        <div><label for="gFecha">Fecha</label><input id="gFecha" type="date"></div>
+        <div class="f-boton"><button class="primario" id="btnAgregar">Anotar</button></div>
+      </div>
+      <p class="nota" id="notaRapida" hidden></p>
+      <button class="enlace-ia" id="btnIrAnotarIA" data-solo-ia hidden>
+        <svg><use href="#i-asistente"/></svg>Anotar escribiendo como habla, o desde una foto o extracto</button>
+    </div>
+
+    <div class="panel analisis" data-en="resumen" data-solo-ia hidden>
+      <h2>Lectura del mes <em id="analisisModelo"></em></h2>
+      <div id="analisis"></div>
+      <div class="edicion-botones">
+        <button class="primario" id="btnAnalizar"><svg><use href="#i-asistente"/></svg> Analizar el mes</button>
+        <span class="nota" id="analisisNota">El asistente revisa sus cifras y le cuenta lo que vale la pena saber.</span>
+      </div>
+    </div>
+
+    <div class="rejilla" data-en="resumen">
+      <div class="panel ancho">
+        <h2>Saldo mes a mes <em id="saldoResumen"></em></h2>
+        <div class="grafico" id="grafSaldo"></div>
+        <p class="nota" id="proyNota"></p>
+      </div>
+
+      <div class="panel">
+        <h2>En qué se fue <em id="totalCats"></em></h2>
+        <div class="dona-caja">
+          <div class="grafico dona" id="grafCats"></div>
+          <div id="listaCats" class="leyenda-cats"></div>
+        </div>
+        <p class="nota" id="notaCats" hidden></p>
+      </div>
+
+      <div class="panel">
+        <h2>Entradas y salidas <em id="flujoResumen"></em></h2>
+        <div class="grafico" id="grafFlujo"></div>
+      </div>
+
+      <div class="panel ancho">
+        <h2>Presupuesto del mes <em id="presupuestoResumen"></em></h2>
+        <div id="listaPresupuesto"></div>
+        <div class="edicion-botones"><button id="btnTopes">Definir topes</button></div>
+      </div>
+
+      <div class="panel">
+        <h2>Gasto por día <em id="diasResumen"></em></h2>
+        <div class="grafico" id="grafDias"></div>
+      </div>
+
+      <div class="panel" id="agendaResumen">
+        <h2 tabindex="-1">Lo que viene <em id="calResumen"></em></h2>
+        <div id="calendario" class="calendario"></div>
+      </div>
+    </div>
+
+    <!-- ======================================================== movimientos -->
+    <div class="rejilla" data-en="movimientos">
+      <div class="panel ancho movimientos-lista">
+        <h2>Movimientos del mes <em id="contMovs"></em></h2>
+        <input id="buscarMovs" class="buscador" type="search" placeholder="Buscar en todos los meses: concepto, categoría o monto">
+        <div class="filtros" id="filtros">
+          <button class="chip activo" data-filtro="todo">Todo</button>
+          <button class="chip" data-filtro="entrada">Entradas</button>
+          <button class="chip" data-filtro="salida">Salidas</button>
+          <button class="chip" data-filtro="fijo">Pagos de fijos</button>
+          <button class="chip" data-filtro="ahorro">Ahorro</button>
+          <button class="chip" data-filtro="tarjeta">Tarjeta</button>
+          <button class="chip" data-filtro="prestamo">Préstamos</button>
+        </div>
+        <div id="listaMovs"></div>
+      </div>
+
+      <div class="panel ancho">
+        <h2>Ingresos del mes <em id="ingresosResumen"></em></h2>
+        <div id="listaIngresos"></div>
+        <div class="form-ingreso">
+          <div><label for="iDesc">De dónde vino</label><input id="iDesc" placeholder="Sueldo de agosto"></div>
+          <div><label for="iCat">Origen</label><select id="iCat"></select></div>
+          <div id="campoSueldo" hidden><label for="iSueldo">De cuál sueldo</label><select id="iSueldo"></select></div>
+          <div><label for="iMonto">Monto</label><input id="iMonto" type="number" min="0" step="1000"></div>
+          <div><label for="iFecha">Fecha</label><input id="iFecha" type="date"></div>
+          <div><button id="btnIngreso">Agregar ingreso</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================== fijos -->
+    <div class="rejilla" data-en="fijos">
+      <div class="panel ancho">
+        <h2>Gastos fijos del mes <em id="fijosResumen"></em></h2>
+        <div id="filaPagoTarjeta"></div>
+        <div id="listaFijos"></div>
+        <div id="terminadosCaja"></div>
+        <div class="form-fijo">
+          <div><label for="fConcepto">Nuevo fijo</label><input id="fConcepto" placeholder="Arriendo"></div>
+          <div><label for="fCat">Categoría</label><select id="fCat"></select></div>
+          <div><label for="fMonto">Monto</label><input id="fMonto" type="number" min="0" step="1000"></div>
+          <div><label for="fRepite">Repetición</label><select id="fRepite">
+            <option value="cada">Todos los meses</option>
+            <option value="unico">Solo este mes</option>
+          </select></div>
+          <div><button id="btnFijo">Agregar</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Sueldo esperado <em id="sueldoResumen"></em></h2>
+        <div id="listaSueldos"></div>
+        <p class="nota" id="sueldoNota"></p>
+        <div class="form-sueldo">
+          <div><label for="sConcepto">Nombre</label><input id="sConcepto" placeholder="Sueldo"></div>
+          <div><label for="sMonto">Monto por pago</label><input id="sMonto" type="number" min="0" step="10000"></div>
+          <div><label for="sFrec">Cada cuánto</label><select id="sFrec">
+            <option value="mensual">Mensual</option>
+            <option value="quincenal">Quincenal</option>
+            <option value="semanal">Semanal</option>
+          </select></div>
+          <div><button id="btnSueldo">Agregar</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Saldo al iniciar el mes <em id="inicialOrigen"></em></h2>
+        <div class="ajustes">
+          <div>
+            <label for="inpInicial">Monto con el que arrancó el mes</label>
+            <input id="inpInicial" type="number" step="1000">
+          </div>
+          <div class="ajustes-btns">
+            <button id="btnArrastre">Usar el cierre del mes anterior</button>
+          </div>
+        </div>
+        <p class="nota" id="notaInicial"></p>
+      </div>
+    </div>
+
+    <!-- ============================================================= tarjeta -->
+    <div class="panel" id="panelTarjeta" data-en="tarjeta">
+      <h2>Tarjeta de crédito <em id="tarjetaResumen"></em></h2>
+
+      <div id="tarjetaConfig" hidden>
+        <div class="form-tarjeta">
+          <div class="ancho"><label for="tNombre">Tarjeta</label><input id="tNombre"></div>
+          <div><label for="tCupo">Cupo total</label><input id="tCupo" type="number" min="0" step="100000"></div>
+          <div><label for="tTasa">Tasa E.A. %</label><input id="tTasa" type="number" min="0" step="0.01"></div>
+          <div><label for="tManejo">Cuota de manejo</label><input id="tManejo" type="number" min="0" step="100"></div>
+          <div><label for="tCorte">Día de corte</label><input id="tCorte" type="number" min="1" max="31" step="1"></div>
+          <div><label for="tPago">Día límite de pago</label><input id="tPago" type="number" min="1" max="31" step="1"></div>
+          <div><label for="tComision">Comisión por avance</label><input id="tComision" type="number" min="0" step="10"></div>
+        </div>
+        <div class="edicion-botones">
+          <button class="primario" id="btnTarjeta">Guardar tarjeta</button>
+          <button id="btnTarjetaCancelar">Cancelar</button>
+        </div>
+        <p class="nota" id="tarjetaNotaConfig"></p>
+      </div>
+
+      <div id="tarjetaVista" hidden>
+        <div id="tarjetaCabecera"></div>
+        <div class="tarjeta-grid">
+          <div id="tarjetaPago"></div>
+          <div id="tarjetaCuotas"></div>
+        </div>
+
+        <section class="tarjeta-seccion tarjeta-nueva" aria-labelledby="tituloCompra">
+        <h3 id="tituloCompra">Nueva compra o avance</h3>
+        <div class="form-compra">
+          <div><label for="cTipo">Tipo</label><select id="cTipo">
+            <option value="compra">Compra</option>
+            <option value="avance">Avance a la cuenta</option>
+          </select></div>
+          <div class="ancho"><label for="cDesc">Qué fue</label><input id="cDesc" placeholder="Mercado del mes"></div>
+          <div id="campoCCat"><label for="cCat">Categoría</label><select id="cCat"></select></div>
+          <div><label for="cMonto">Monto</label><input id="cMonto" type="number" min="0" step="1000"></div>
+          <div><label for="cCuotas">Cuotas</label><input id="cCuotas" type="number" min="1" max="48" step="1" value="1"></div>
+          <div><label for="cFecha">Fecha</label><input id="cFecha" type="date"></div>
+          <div><button class="primario" id="btnCompra">Anotar</button></div>
+        </div>
+        <p class="nota" id="compraPrevia"></p>
+        </section>
+
+        <section class="tarjeta-seccion tarjeta-deudas">
+        <h3>Compras por pagar <em id="deudaResumen"></em></h3>
+        <div id="tarjetaDeudas"></div>
+        <div id="tarjetaPagadasCaja"></div>
+        </section>
+
+        <section class="tarjeta-seccion tarjeta-avances">
+        <h3>Avances <em id="avancesResumen"></em></h3>
+        <div id="tarjetaAvances"></div>
+        </section>
+
+        <section class="tarjeta-seccion tarjeta-proyeccion">
+        <h3>Lo que viene en la tarjeta</h3>
+        <div class="tabla-scroll">
+          <table class="hist" id="tablaProyeccion">
+            <thead><tr><th>Mes de pago</th><th>Capital</th><th>Intereses</th><th>Manejo y comisiones</th><th>Total</th><th>Deuda al cierre</th></tr></thead>
+            <tbody id="cuerpoProyeccion"></tbody>
+          </table>
+        </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- =========================================================== préstamos -->
+    <div class="panel" data-en="prestamos">
+      <h2>Plata prestada <em id="prestamosResumen"></em></h2>
+      <div id="listaPrestamos"></div>
+      <div id="prestamosCerradosCaja"></div>
+      <div class="form-prestamo">
+        <div><label for="pPersona">A quién</label><input id="pPersona" list="personas" placeholder="Nombre"></div>
+        <div><label for="pConcepto">Para qué</label><input id="pConcepto" placeholder="Opcional"></div>
+        <div><label for="pMonto">Monto</label><input id="pMonto" type="number" min="0" step="1000"></div>
+        <div><label for="pFecha">Cuándo</label><input id="pFecha" type="date"></div>
+        <div><label for="pAcordada">Quedó de pagar</label><input id="pAcordada" type="date"></div>
+        <div><button class="primario" id="btnPrestamo">Prestar</button></div>
+      </div>
+      <datalist id="personas"></datalist>
+      <p class="nota">Lo prestado sale del saldo del mes en que lo entrega, y cada abono que le devuelvan entra como ingreso.</p>
+    </div>
+
+    <!-- ============================================================= ahorros -->
+    <div class="panel" data-en="ahorros">
+      <h2>Ahorros <em id="ahorrosResumen"></em></h2>
+      <div id="listaAhorros"></div>
+      <p class="nota" id="ahorroNota"></p>
+      <div class="form-ahorro">
+        <div><label for="aNombre">Nombre del ahorro</label><input id="aNombre" placeholder="Fondo de emergencia"></div>
+        <div><label for="aMonto">Meta mensual</label><input id="aMonto" type="number" min="0" step="10000"></div>
+        <div><label for="aInicial">Ahorro inicial</label><input id="aInicial" type="number" step="10000" placeholder="0"></div>
+        <div><label for="aObjetivo">Meta total (opcional)</label><input id="aObjetivo" type="number" min="0" step="10000"></div>
+        <div><button class="primario" id="btnAhorro">Crear ahorro</button></div>
+      </div>
+    </div>
+
+    <!-- ============================================================ historia -->
+    <div class="panel" data-en="historia">
+      <h2>Patrimonio mes a mes <em id="patrimonioResumen"></em></h2>
+      <div class="grafico" id="grafPatrimonio"></div>
+      <p class="nota">Saldo de la cuenta + ahorros + lo que le deben − lo que debe en la tarjeta, al cierre de cada mes.</p>
+    </div>
+
+    <div class="panel" data-en="historia">
+      <h2>Historia mes a mes <em id="histResumen"></em></h2>
+      <div class="tabla-scroll">
+        <table class="hist" id="tablaHist">
+          <thead>
+            <tr>
+              <th>Mes</th><th>Inicial</th><th>Entradas</th><th>Salidas</th>
+              <th>Cierre</th><th>Pendiente</th><th>Ahorro</th><th>Patrimonio</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="cuerpoHist"></tbody>
+        </table>
+      </div>
+      <p class="nota">El cierre de cada mes es el saldo con el que arranca el siguiente, salvo que
+      usted escriba otro monto a mano en el recuadro de saldo inicial.</p>
+    </div>
+
+    <!-- =========================================================== asistente -->
+    <div class="panel" data-en="asistente" id="iaSinClave" hidden>
+      <h2 class="titulo-asistente"><img src="avatar-asistente.png" width="64" height="64" alt="">Configurar el asistente</h2>
+      <p>Agregue su clave de OpenAI en Configuración para activar el asistente.</p>
+      <p class="nota">Al usar el asistente, los datos necesarios para cada consulta se envían a OpenAI.</p>
+      <button class="primario" id="btnAbrirAjustes">Ir a configuración</button>
+      <div class="edicion-botones"><button class="primario" id="btnIaRevisar">Volver a revisar</button></div>
+    </div>
+
+    <div class="rejilla" data-en="asistente" id="iaConClave" hidden>
+      <div class="panel ancho">
+        <h2>Anotar con palabras <em id="iaModelo"></em></h2>
+        <textarea id="iaTexto" rows="3" placeholder="Ayer almorcé 25 mil con la tarjeta, hoy pagué 80 mil de gasolina y le presté 50 mil a Andrés que me paga el viernes"></textarea>
+        <div class="ia-acciones">
+          <button class="primario" id="btnIaInterpretar">Interpretar</button>
+          <label class="boton-archivo" for="iaArchivo">Leer foto, recibo o extracto (PDF)</label>
+          <input type="file" id="iaArchivo" accept="image/*,application/pdf" hidden>
+          <span class="nota" id="iaEstado"></span>
+        </div>
+        <div id="iaPropuestas"></div>
+      </div>
+
+      <div class="panel ancho chat-panel">
+        <h2 class="titulo-asistente"><img src="avatar-asistente.png" width="64" height="64" alt="">Pregúntele a sus cuentas</h2>
+        <div class="chat" id="chat">
+          <div class="chat-bienvenida" id="chatBienvenida">
+            <p>Pregunte lo que quiera sobre su plata. El asistente consulta sus datos antes de responder.</p>
+            <div class="sugerencias" id="sugerencias">
+              <button class="chip">¿En qué gasté más este mes y cómo va frente al anterior?</button>
+              <button class="chip">¿Cuánto me cuesta en intereses lo que debo en la tarjeta?</button>
+              <button class="chip">¿Me alcanza para comprar algo de 1.500.000 a 6 cuotas?</button>
+              <button class="chip">¿Quién me debe plata y desde cuándo?</button>
+              <button class="chip">¿Cómo voy a terminar el año?</button>
+              <button class="chip">¿A cuánto está el dólar hoy y cuánto me cuesta una compra de 100 USD a 3 cuotas?</button>
+              <button class="chip">Haga un gráfico de mi consumo por categoría en los últimos meses</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-entrada">
+          <textarea id="chatTexto" rows="1" placeholder="Escriba su pregunta"></textarea>
+          <button class="primario" id="btnChat">Enviar</button>
+          <button class="ghost" id="btnChatNuevo" title="Empezar una conversación nueva">Nueva</button>
+        </div>
+        <div class="chat-opciones">
+          <label title="Tasas, TRM, precios, noticias. A las búsquedas no van sus datos."><input type="checkbox" id="optWeb" checked> Buscar en internet</label>
+          <label title="Python en un espacio aislado de OpenAI: cálculos largos, gráficos y archivos."><input type="checkbox" id="optCodigo" checked> Ejecutar código</label>
+        </div>
+        <p class="nota">Es un análisis de sus propios datos, no asesoría financiera profesional.</p>
+      </div>
+    </div>
+
+    <section class="panel configuracion" data-en="ajustes">
+      <div class="config-cabecera"><span class="config-icono"><svg><use href="#i-asistente"/></svg></span><div><span class="rotulo">Conexión</span><h2>Asistente de OpenAI</h2></div></div>
+      <p>Configure una clave para usar el asistente, analizar el mes y registrar movimientos con palabras o archivos.</p>
+      <p class="config-estado" id="claveEstado" role="status">Comprobando conexión…</p>
+      <form id="formClave" autocomplete="off">
+        <label for="claveIA">Clave de API de OpenAI</label>
+        <div class="config-form"><input id="claveIA" type="password" autocomplete="off" placeholder="Pegue su clave aquí" required><button class="primario" type="submit">Guardar clave</button></div>
+      </form>
+      <p class="nota" id="claveNota" aria-live="polite">La clave se guarda en este equipo y no se vuelve a mostrar. Al usar el asistente, los datos necesarios para cada consulta se envían a OpenAI.</p>
+    </section>
+
+  </main>
+</div>
+
+<div class="tooltip" id="tooltip" role="status" hidden></div>
+
+<script src="montos.js"></script>
+<script src="app.js"></script>
+<script src="tarjeta.js"></script>
+<script src="prestamos.js"></script>
+<script src="graficos.js"></script>
+<script src="presupuesto.js"></script>
+<script src="avisos.js"></script>
+<script src="asistente.js"></script>
+<script src="guia.js"></script>
+</body>
+</html>
