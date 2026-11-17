@@ -12,11 +12,11 @@ App de escritorio para Windows para gestionar movimientos, presupuestos, tarjeta
 
 **Explicar un campo.** Desde Tarjeta, abre **Ayuda → Preguntar al asistente**. Si preguntas «¿Qué significa cupo?», el asistente usa el contexto de Tarjeta para explicar que es el límite de crédito.
 
-**Consultar la libreta.** En una prueba con datos ficticios, el asistente leyó el saldo del mes (1.510.000 COP), los gastos de alimentación (150.000 COP) y el capital pendiente de la tarjeta (360.000 COP).
+**Evaluar una compra.** En la captura, el asistente revisa cuánto efectivo queda, desglosa el consumo por categoría y distingue la deuda del cupo disponible. Después simula una compra ficticia de 600.000 COP a tres cuotas y muestra que el cupo pasaría de 1.640.000 a 1.040.000 COP. La simulación no crea ningún movimiento.
 
 **Proponer un movimiento.** Si escribes «Anota 13.000 pesos de café», el chat presenta una propuesta editable. El gasto se guarda cuando pulsas **Anotar 1 movimiento**.
 
-![Chat del asistente mostrando una consulta de saldo, gastos y deuda con datos ficticios](docs/capturas/asistente.png)
+![Chat del asistente con un análisis del mes y una simulación de compra a tres cuotas con datos ficticios](docs/capturas/asistente.png)
 
 ## Ejecutar
 
