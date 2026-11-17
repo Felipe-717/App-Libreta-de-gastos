@@ -2,6 +2,22 @@
 
 App de escritorio para Windows para gestionar movimientos, presupuestos, tarjetas, préstamos y ahorros. Cada instalación crea una base SQLite local. Incluye una guía por pestaña y un asistente de OpenAI opcional.
 
+![Resumen mensual con datos ficticios](docs/capturas/resumen.png)
+
+| Tarjeta de crédito | Guía interactiva |
+| --- | --- |
+| ![Cupo, extracto y compras de una tarjeta ficticia](docs/capturas/tarjeta.png) | ![Guía resaltando el saldo disponible](docs/capturas/guia.png) |
+
+## Ejemplos del asistente
+
+**Explicar un campo.** Desde Tarjeta, abre **Ayuda → Preguntar al asistente**. Si preguntas «¿Qué significa cupo?», el asistente usa el contexto de Tarjeta para explicar que es el límite de crédito.
+
+**Consultar la libreta.** En una prueba con datos ficticios, el asistente leyó el saldo del mes (1.510.000 COP), los gastos de alimentación (150.000 COP) y el capital pendiente de la tarjeta (360.000 COP).
+
+**Proponer un movimiento.** Si escribes «Anota 13.000 pesos de café», el chat presenta una propuesta editable. El gasto se guarda cuando pulsas **Confirmar**.
+
+![Ayuda contextual en la pestaña Tarjeta](docs/capturas/ayuda.png)
+
 ## Ejecutar
 
 En PowerShell, ejecuta `python servidor.py` y abre la dirección local. Para crear un acceso directo a la versión de escritorio, ejecuta `instalar.ps1`. La ventana de escritorio usa Microsoft Edge WebView2.
